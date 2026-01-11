@@ -5,7 +5,65 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <string.h>
+#include <stdlib.h>
 #include "newmm.h"
+
+/* Module-level dictionary cache */
+static struct {
+    newmm_dict_t dict;
+    char* dict_path;
+} dict_cache = {NULL, NULL};
+
+/**
+ * Load or retrieve cached dictionary
+ */
+static newmm_dict_t get_or_load_dict(const char* dict_path) {
+    /* Check if we need to reload the dictionary */
+    int need_reload = 0;
+    
+    if (dict_cache.dict == NULL) {
+        /* No cached dict */
+        need_reload = 1;
+    } else if (dict_path == NULL && dict_cache.dict_path != NULL) {
+        /* Switching from custom to default */
+        need_reload = 1;
+    } else if (dict_path != NULL && dict_cache.dict_path == NULL) {
+        /* Switching from default to custom */
+        need_reload = 1;
+    } else if (dict_path != NULL && dict_cache.dict_path != NULL) {
+        /* Both custom, check if path changed */
+        if (strcmp(dict_path, dict_cache.dict_path) != 0) {
+            need_reload = 1;
+        }
+    }
+    
+    if (need_reload) {
+        /* Free old dictionary */
+        if (dict_cache.dict) {
+            newmm_free_dict(dict_cache.dict);
+            dict_cache.dict = NULL;
+        }
+        if (dict_cache.dict_path) {
+            free(dict_cache.dict_path);
+            dict_cache.dict_path = NULL;
+        }
+        
+        /* Load new dictionary */
+        dict_cache.dict = newmm_load_dict(dict_path);
+        if (dict_cache.dict && dict_path) {
+            dict_cache.dict_path = strdup(dict_path);
+            if (!dict_cache.dict_path) {
+                /* strdup failed, clean up and return NULL */
+                newmm_free_dict(dict_cache.dict);
+                dict_cache.dict = NULL;
+                return NULL;
+            }
+        }
+    }
+    
+    return dict_cache.dict;
+}
 
 /**
  * Python wrapper for newmm_segment function
@@ -21,8 +79,15 @@ static PyObject* py_newmm_segment(PyObject* Py_UNUSED(self), PyObject* args, PyO
         return NULL;
     }
     
-    /* Call C function */
-    char** tokens = newmm_segment(text, dict_path, &token_count);
+    /* Get or load dictionary */
+    newmm_dict_t dict = get_or_load_dict(dict_path);
+    if (!dict) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to load dictionary (out of memory)");
+        return NULL;
+    }
+    
+    /* Call C function with cached dictionary */
+    char** tokens = newmm_segment_with_dict(text, dict, &token_count);
     
     if (!tokens) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to segment text");
@@ -53,6 +118,21 @@ static PyObject* py_newmm_segment(PyObject* Py_UNUSED(self), PyObject* args, PyO
 }
 
 /**
+ * Clear cached dictionary
+ */
+static PyObject* py_clear_cache(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(args)) {
+    if (dict_cache.dict) {
+        newmm_free_dict(dict_cache.dict);
+        dict_cache.dict = NULL;
+    }
+    if (dict_cache.dict_path) {
+        free(dict_cache.dict_path);
+        dict_cache.dict_path = NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+/**
  * Module method definitions
  */
 static PyMethodDef CThaiNLPMethods[] = {
@@ -71,6 +151,13 @@ static PyMethodDef CThaiNLPMethods[] = {
         "    >>> tokens = _cthainlp.segment('ฉันไปโรงเรียน')\n"
         "    >>> print(tokens)\n"
         "    ['ฉัน', 'ไป', 'โรงเรียน']\n"
+    },
+    {
+        "clear_cache",
+        py_clear_cache,
+        METH_NOARGS,
+        "Clear the cached dictionary.\n\n"
+        "This forces the next tokenization to reload the dictionary.\n"
     },
     {NULL, NULL, 0, NULL}  /* Sentinel */
 };
@@ -91,8 +178,25 @@ static struct PyModuleDef cthainlp_module = {
 };
 
 /**
+ * Module cleanup function
+ */
+static void module_free(void* Py_UNUSED(self)) {
+    /* Clean up cached dictionary on module unload */
+    if (dict_cache.dict) {
+        newmm_free_dict(dict_cache.dict);
+        dict_cache.dict = NULL;
+    }
+    if (dict_cache.dict_path) {
+        free(dict_cache.dict_path);
+        dict_cache.dict_path = NULL;
+    }
+}
+
+/**
  * Module initialization function
  */
 PyMODINIT_FUNC PyInit__cthainlp(void) {
+    /* Update module definition with cleanup function */
+    cthainlp_module.m_free = module_free;
     return PyModule_Create(&cthainlp_module);
 }

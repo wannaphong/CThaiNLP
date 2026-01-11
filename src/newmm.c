@@ -23,15 +23,6 @@ typedef struct {
     int size;
 } Graph;
 
-/* Helper: Check if position is in the valid positions set */
-static bool is_valid_pos(int pos, int* valid_pos, int num_valid) {
-    for (int i = 0; i < num_valid; i++) {
-        if (valid_pos[i] == pos) return true;
-        if (valid_pos[i] > pos) return false;
-    }
-    return false;
-}
-
 /* Helper: Check if character is non-Thai */
 static bool is_non_thai_char(int codepoint) {
     /* Latin letters, digits, spaces */
@@ -259,14 +250,7 @@ static const char* default_words[] = {
     NULL
 };
 
-char** newmm_segment(const char* text, const char* dict_path, int* token_count) {
-    if (!text || !token_count) return NULL;
-    
-    *token_count = 0;
-    
-    /* Empty text */
-    if (!text[0]) return NULL;
-    
+newmm_dict_t newmm_load_dict(const char* dict_path) {
     /* Create trie */
     Trie* trie = trie_create();
     if (!trie) return NULL;
@@ -286,14 +270,51 @@ char** newmm_segment(const char* text, const char* dict_path, int* token_count) 
         }
     }
     
+    return (newmm_dict_t)trie;
+}
+
+void newmm_free_dict(newmm_dict_t dict) {
+    if (dict) {
+        trie_free((Trie*)dict);
+    }
+}
+
+char** newmm_segment_with_dict(const char* text, newmm_dict_t dict, int* token_count) {
+    if (!text || !token_count || !dict) return NULL;
+    
+    *token_count = 0;
+    
+    /* Empty text */
+    if (!text[0]) return NULL;
+    
+    Trie* trie = (Trie*)dict;
+    
     /* Segment text */
     char** tokens = NULL;
     int count = segment_text(text, trie, &tokens);
     
-    /* Cleanup */
-    trie_free(trie);
-    
     *token_count = count;
+    return tokens;
+}
+
+char** newmm_segment(const char* text, const char* dict_path, int* token_count) {
+    if (!text || !token_count) return NULL;
+    
+    *token_count = 0;
+    
+    /* Empty text */
+    if (!text[0]) return NULL;
+    
+    /* Create and load dictionary */
+    newmm_dict_t dict = newmm_load_dict(dict_path);
+    if (!dict) return NULL;
+    
+    /* Segment text */
+    char** tokens = newmm_segment_with_dict(text, dict, token_count);
+    
+    /* Cleanup */
+    newmm_free_dict(dict);
+    
     return tokens;
 }
 
