@@ -94,7 +94,7 @@ jobs:
     
     - name: Test import and basic functionality
       run: |
-        python -c "from cthainlp import word_tokenize; print('Import successful'); tokens = word_tokenize('ฉันไปโรงเรียน'); print('Tokens:', tokens); assert len(tokens) > 0, 'Tokenization failed'"
+        python -c "import sys; import io; sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8') if sys.platform == 'win32' else sys.stdout; from cthainlp import word_tokenize; print('Import successful'); tokens = word_tokenize('ฉันไปโรงเรียน'); print('Tokens:', tokens); assert len(tokens) > 0, 'Tokenization failed'"
     
     - name: Upload build logs
       if: failure()
