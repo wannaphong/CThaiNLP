@@ -6,6 +6,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
+#include <stdlib.h>
 #include "newmm.h"
 
 /* Module-level dictionary cache */
@@ -52,6 +53,12 @@ static newmm_dict_t get_or_load_dict(const char* dict_path) {
         dict_cache.dict = newmm_load_dict(dict_path);
         if (dict_cache.dict && dict_path) {
             dict_cache.dict_path = strdup(dict_path);
+            if (!dict_cache.dict_path) {
+                /* strdup failed, clean up and return NULL */
+                newmm_free_dict(dict_cache.dict);
+                dict_cache.dict = NULL;
+                return NULL;
+            }
         }
     }
     
