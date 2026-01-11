@@ -125,7 +125,8 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
         /* Find longest valid prefix */
         for (int i = 0; i < num_prefixes; i++) {
             int end_pos = pos + lengths[i];
-            if (is_valid_pos(end_pos, valid_pos, num_valid) && lengths[i] > best_len) {
+            /* Accept the longest dictionary word, TCC boundary not required */
+            if (lengths[i] > best_len) {
                 best_len = lengths[i];
                 best_end_pos = end_pos;
             }
