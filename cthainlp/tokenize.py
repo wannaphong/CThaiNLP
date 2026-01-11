@@ -52,7 +52,7 @@ def word_tokenize(
     if _cthainlp is None:
         raise ImportError(
             "CThaiNLP C extension is not installed. "
-            "Please install the package properly using: pip install -e ."
+            "Please install the package properly using: pip install cthainlp"
         )
     
     if engine != "newmm":
