@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""
+Test suite for CThaiNLP Python bindings
+"""
+
+import unittest
+import os
+import sys
+
+# Add parent directory to path to allow importing cthainlp
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from cthainlp import word_tokenize
+
+
+class TestWordTokenize(unittest.TestCase):
+    """Test cases for word_tokenize function"""
+    
+    def test_basic_thai_sentence(self):
+        """Test basic Thai sentence segmentation"""
+        text = "ฉันไปโรงเรียน"
+        tokens = word_tokenize(text)
+        
+        # Check that we get a list
+        self.assertIsInstance(tokens, list)
+        
+        # Check that all tokens are strings
+        for token in tokens:
+            self.assertIsInstance(token, str)
+        
+        # With default dictionary, this should segment into known words
+        # Note: exact results depend on the dictionary
+        self.assertGreater(len(tokens), 0)
+        
+        # Join should recreate original text
+        self.assertEqual(''.join(tokens), text)
+    
+    def test_english_text(self):
+        """Test English text segmentation"""
+        text = "hello world"
+        tokens = word_tokenize(text)
+        
+        self.assertIsInstance(tokens, list)
+        self.assertGreater(len(tokens), 0)
+        self.assertEqual(''.join(tokens), text)
+    
+    def test_numbers_only(self):
+        """Test numbers segmentation"""
+        text = "123"
+        tokens = word_tokenize(text)
+        
+        self.assertIsInstance(tokens, list)
+        self.assertEqual(tokens, ["123"])
+    
+    def test_mixed_content(self):
+        """Test mixed Thai, English, and numbers"""
+        text = "ไป ABC 123"
+        tokens = word_tokenize(text)
+        
+        self.assertIsInstance(tokens, list)
+        self.assertGreater(len(tokens), 0)
+        self.assertEqual(''.join(tokens), text)
+    
+    def test_empty_string(self):
+        """Test empty string"""
+        text = ""
+        tokens = word_tokenize(text)
+        
+        self.assertIsInstance(tokens, list)
+        self.assertEqual(len(tokens), 0)
+    
+    def test_single_word(self):
+        """Test single Thai word"""
+        text = "ไป"
+        tokens = word_tokenize(text)
+        
+        self.assertIsInstance(tokens, list)
+        self.assertEqual(tokens, ["ไป"])
+    
+    def test_with_custom_dict(self):
+        """Test with custom dictionary"""
+        text = "ฉันไปโรงเรียน"
+        dict_path = os.path.join(os.path.dirname(__file__), "../../data/thai_words.txt")
+        
+        if os.path.exists(dict_path):
+            tokens = word_tokenize(text, custom_dict=dict_path)
+            self.assertIsInstance(tokens, list)
+            # Should properly segment with full dictionary
+            self.assertIn("ฉัน", tokens)
+            self.assertIn("ไป", tokens)
+            self.assertIn("โรงเรียน", tokens)
+    
+    def test_engine_parameter(self):
+        """Test engine parameter"""
+        text = "ฉันไปโรงเรียน"
+        tokens = word_tokenize(text, engine="newmm")
+        
+        self.assertIsInstance(tokens, list)
+        self.assertGreater(len(tokens), 0)
+    
+    def test_invalid_engine(self):
+        """Test invalid engine raises ValueError"""
+        text = "ฉันไปโรงเรียน"
+        
+        with self.assertRaises(ValueError):
+            word_tokenize(text, engine="invalid_engine")
+    
+    def test_invalid_text_type(self):
+        """Test invalid text type raises TypeError"""
+        with self.assertRaises(TypeError):
+            word_tokenize(123)
+    
+    def test_nonexistent_dict(self):
+        """Test nonexistent dictionary file raises FileNotFoundError"""
+        text = "ฉันไปโรงเรียน"
+        
+        with self.assertRaises(FileNotFoundError):
+            word_tokenize(text, custom_dict="/nonexistent/path/dict.txt")
+
+
+class TestCompatibility(unittest.TestCase):
+    """Test PyThaiNLP API compatibility"""
+    
+    def test_similar_to_pythainlp(self):
+        """Test that API is similar to PyThaiNLP"""
+        # This test verifies that the API matches PyThaiNLP's style
+        from cthainlp import word_tokenize
+        
+        text = "ฉันไปโรงเรียน"
+        
+        # Should work like PyThaiNLP's word_tokenize
+        tokens = word_tokenize(text, engine="newmm")
+        
+        self.assertIsInstance(tokens, list)
+        self.assertGreater(len(tokens), 0)
+
+
+def run_tests():
+    """Run all tests"""
+    suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    return 0 if result.wasSuccessful() else 1
+
+
+if __name__ == "__main__":
+    sys.exit(run_tests())
