@@ -42,6 +42,7 @@ def word_tokenize(
     text: str,
     engine: str = "newmm",
     custom_dict: Optional[str] = None,
+    keep_whitespace: bool = True,
 ) -> List[str]:
     """
     Segment Thai text into words.
@@ -54,6 +55,8 @@ def word_tokenize(
                      Default is 'newmm'.
         custom_dict (str, optional): Path to custom dictionary file (one word per line).
                                      If None, uses the default dictionary.
+        keep_whitespace (bool): Whether to keep whitespace tokens in the result.
+                               Default is True (whitespace is preserved).
     
     Returns:
         list: List of tokens (strings)
@@ -75,6 +78,11 @@ def word_tokenize(
         
         >>> # Explicitly specify engine
         >>> tokens = word_tokenize(text, engine="newmm")
+        
+        >>> # Keep whitespace in output
+        >>> tokens = word_tokenize("สวัสดี ครับ", keep_whitespace=True)
+        >>> print(tokens)
+        ['สวัสดี', ' ', 'ครับ']
     """
     if _cthainlp is None:
         raise ImportError(
@@ -106,6 +114,11 @@ def word_tokenize(
     
     # Call the C extension
     tokens = _cthainlp.segment(text, dict_path)
+    
+    # Handle keep_whitespace parameter
+    if not keep_whitespace:
+        # Filter out whitespace-only tokens
+        tokens = [token for token in tokens if not token.isspace()]
     
     return tokens
 

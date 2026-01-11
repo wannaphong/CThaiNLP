@@ -23,6 +23,38 @@ typedef struct {
     int size;
 } Graph;
 
+/* Helper: Check if a numeric sequence is valid (e.g., 19.84, 127.0.0.1, 1,984.42) */
+static bool is_valid_numeric_continuation(const char* text, int start, int end) {
+    /* Count dots and commas */
+    int dot_count = 0;
+    int comma_count = 0;
+    int last_special = -1;
+    
+    for (int i = start; i < end; i++) {
+        if (text[i] == '.') {
+            dot_count++;
+            last_special = i;
+        } else if (text[i] == ',') {
+            comma_count++;
+            last_special = i;
+        }
+    }
+    
+    /* If ends with special char, check if followed by more special chars */
+    if (last_special == end - 1 && end < (int)strlen(text)) {
+        char next = text[end];
+        if (next == '.' || next == ',') {
+            /* Multiple punctuation in a row - not valid numeric continuation */
+            return false;
+        }
+    }
+    
+    /* Allow IP addresses (multiple dots with digits) */
+    /* Allow decimals (one dot) */
+    /* Allow formatted numbers (commas and at most one dot) */
+    return true;
+}
+
 /* Helper: Check if character is non-Thai */
 static bool is_non_thai_char(int codepoint) {
     /* Latin letters, digits, spaces */
@@ -202,6 +234,7 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                 bool is_space = (cp == ' ' || cp == '\t');
                 bool is_alpha = ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z'));
                 bool is_digit = (cp >= '0' && cp <= '9');
+                bool is_punctuation = !is_space && !is_alpha && !is_digit;
                 
                 while (end < text_len) {
                     int next_cp = get_utf8_codepoint(text + end, &byte_len);
@@ -209,7 +242,33 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                     
                     if (is_space && (next_cp == ' ' || next_cp == '\t')) match = true;
                     else if (is_alpha && ((next_cp >= 'a' && next_cp <= 'z') || (next_cp >= 'A' && next_cp <= 'Z'))) match = true;
-                    else if (is_digit && ((next_cp >= '0' && next_cp <= '9') || next_cp == '.' || next_cp == ',')) match = true;
+                    else if (is_digit && (next_cp >= '0' && next_cp <= '9')) {
+                        match = true;
+                    } else if (is_digit && (next_cp == '.' || next_cp == ',')) {
+                        /* Check if this is a valid numeric pattern */
+                        int temp_end = end + byte_len;
+                        /* Look ahead to see if followed by digit */
+                        if (temp_end < text_len) {
+                            int lookahead_len;
+                            int lookahead_cp = get_utf8_codepoint(text + temp_end, &lookahead_len);
+                            if (lookahead_cp >= '0' && lookahead_cp <= '9') {
+                                /* Followed by digit, it's part of number */
+                                match = true;
+                            } else if (lookahead_cp == '.' || lookahead_cp == ',') {
+                                /* Multiple punctuation - stop here */
+                                match = false;
+                            } else {
+                                /* Followed by non-digit - stop before the punctuation */
+                                match = false;
+                            }
+                        } else {
+                            /* At end of text - punctuation is separate */
+                            match = false;
+                        }
+                    } else if (is_punctuation && next_cp == cp) {
+                        /* Same punctuation character - group together */
+                        match = true;
+                    }
                     
                     if (!match) break;
                     end += byte_len;
