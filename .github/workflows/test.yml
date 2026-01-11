@@ -1,0 +1,58 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, dev, copilot/** ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build-and-test:
+    name: Build and Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+          - os: macos-latest
+            cc: clang
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Display system information
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "Compiler: ${{ matrix.cc }}"
+        ${{ matrix.cc }} --version
+        make --version
+    
+    - name: Build project
+      run: |
+        make clean
+        make all
+      env:
+        CC: ${{ matrix.cc }}
+    
+    - name: Run tests
+      run: make test
+    
+    - name: Test basic example
+      run: |
+        ./build/example_basic "ฉันไปโรงเรียน" data/thai_words.txt
+        ./build/example_basic "วันนี้อากาศดีมาก" data/thai_words.txt
+        ./build/example_basic "hello world 123"
+    
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts-${{ matrix.os }}
+        path: |
+          build/
+          lib/
+        retention-days: 5
