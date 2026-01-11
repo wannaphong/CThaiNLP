@@ -133,6 +133,72 @@ class TestCompatibility(unittest.TestCase):
         
         self.assertIsInstance(tokens, list)
         self.assertGreater(len(tokens), 0)
+    
+    def test_newmm(self):
+        """Test newmm module compatibility with PyThaiNLP"""
+        from cthainlp import newmm
+        from cthainlp import word_tokenize
+        
+        self.assertEqual(newmm.segment(None), [])
+        self.assertEqual(newmm.segment(""), [])
+        self.assertEqual(
+            word_tokenize("ฉันรักภาษาไทยเพราะฉันเป็นคนไทย", engine="newmm"),
+            ["ฉัน", "รัก", "ภาษาไทย", "เพราะ", "ฉัน", "เป็น", "คนไทย"],
+        )
+        self.assertEqual(
+            word_tokenize("19...", engine="newmm"),
+            ["19", "..."],
+        )
+        self.assertEqual(
+            word_tokenize("19.", engine="newmm"),
+            ["19", "."],
+        )
+        self.assertEqual(
+            word_tokenize("19.84", engine="newmm"),
+            ["19.84"],
+        )
+        self.assertEqual(
+            word_tokenize("127.0.0.1", engine="newmm"),
+            ["127.0.0.1"],
+        )
+        self.assertEqual(
+            word_tokenize("USD1,984.42", engine="newmm"),
+            ["USD", "1,984.42"],
+        )
+        self.assertEqual(
+            word_tokenize(
+                "สวัสดีครับ สบายดีไหมครับ",
+                engine="newmm",
+                keep_whitespace=True,
+            ),
+            ["สวัสดี", "ครับ", " ", "สบายดี", "ไหม", "ครับ"],
+        )
+        self.assertEqual(
+            word_tokenize("จุ๋มง่วงนอนยัง", engine="newmm"),
+            ["จุ๋ม", "ง่วงนอน", "ยัง"],
+        )
+        self.assertEqual(word_tokenize("จุ๋มง่วง", engine="newmm"), ["จุ๋ม", "ง่วง"])
+        self.assertEqual(
+            word_tokenize("จุ๋ม   ง่วง", engine="newmm", keep_whitespace=False),
+            ["จุ๋ม", "ง่วง"],
+        )
+        self.assertNotIn(
+            " ",
+            word_tokenize(
+                "จุ๋มง่วง",
+                keep_whitespace=False,
+            ),
+        )
+        self.assertEqual(
+            word_tokenize("(คนไม่เอา)", engine="newmm"),
+            ["(", "คน", "ไม่", "เอา", ")"],
+        )
+        self.assertEqual(
+            word_tokenize("กม/ชม", engine="newmm"), ["กม", "/", "ชม"]
+        )
+        self.assertEqual(
+            word_tokenize("สีหน้า(รถ)", engine="newmm"), ["สีหน้า", "(", "รถ", ")"]
+        )
 
 
 def run_tests():

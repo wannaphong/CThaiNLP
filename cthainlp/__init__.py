@@ -7,5 +7,6 @@ __version__ = "0.1.0"
 __author__ = "Wannaphong Phatthiyaphaibun"
 
 from cthainlp.tokenize import word_tokenize
+from cthainlp import newmm
 
-__all__ = ["word_tokenize", "__version__"]
+__all__ = ["word_tokenize", "newmm", "__version__"]

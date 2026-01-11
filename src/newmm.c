@@ -202,6 +202,7 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                 bool is_space = (cp == ' ' || cp == '\t');
                 bool is_alpha = ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z'));
                 bool is_digit = (cp >= '0' && cp <= '9');
+                bool is_punctuation = !is_space && !is_alpha && !is_digit;
                 
                 while (end < text_len) {
                     int next_cp = get_utf8_codepoint(text + end, &byte_len);
@@ -209,7 +210,33 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                     
                     if (is_space && (next_cp == ' ' || next_cp == '\t')) match = true;
                     else if (is_alpha && ((next_cp >= 'a' && next_cp <= 'z') || (next_cp >= 'A' && next_cp <= 'Z'))) match = true;
-                    else if (is_digit && ((next_cp >= '0' && next_cp <= '9') || next_cp == '.' || next_cp == ',')) match = true;
+                    else if (is_digit && (next_cp >= '0' && next_cp <= '9')) {
+                        match = true;
+                    } else if (is_digit && (next_cp == '.' || next_cp == ',')) {
+                        /* Check if this is a valid numeric pattern */
+                        int temp_end = end + byte_len;
+                        /* Look ahead to see if followed by digit */
+                        if (temp_end < text_len) {
+                            int lookahead_len;
+                            int lookahead_cp = get_utf8_codepoint(text + temp_end, &lookahead_len);
+                            if (lookahead_cp >= '0' && lookahead_cp <= '9') {
+                                /* Followed by digit, it's part of number */
+                                match = true;
+                            } else if (lookahead_cp == '.' || lookahead_cp == ',') {
+                                /* Multiple punctuation - stop here */
+                                match = false;
+                            } else {
+                                /* Followed by non-digit - stop before the punctuation */
+                                match = false;
+                            }
+                        } else {
+                            /* At end of text - punctuation is separate */
+                            match = false;
+                        }
+                    } else if (is_punctuation && next_cp == cp) {
+                        /* Same punctuation character - group together */
+                        match = true;
+                    }
                     
                     if (!match) break;
                     end += byte_len;
