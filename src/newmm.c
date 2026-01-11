@@ -162,18 +162,19 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                                 /* Prefer it */
                                 best_len = lengths[i];
                                 best_end_pos = end_pos;
-                                
-                                /* Free and break */
-                                for (int j = 0; j < num_next; j++) {
-                                    free(next_prefixes[j]);
-                                }
-                                free(next_prefixes);
-                                free(next_lengths);
-                                break;
                             }
                             
+                            /* Free lookahead results */
+                            for (int j = 0; j < num_next; j++) {
+                                free(next_prefixes[j]);
+                            }
                             free(next_prefixes);
                             free(next_lengths);
+                            
+                            if (num_next > 0) {
+                                /* We found a better match, stop looking */
+                                break;
+                            }
                         }
                     }
                 }

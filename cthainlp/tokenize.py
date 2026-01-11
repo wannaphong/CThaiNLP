@@ -11,7 +11,7 @@ except ImportError:
     _cthainlp = None
 
 
-def _get_default_dict_path() -> str:
+def _get_default_dict_path() -> Optional[str]:
     """
     Get the default dictionary file path.
     
