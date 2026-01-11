@@ -40,6 +40,9 @@ setup(
     url="https://github.com/wannaphong/CThaiNLP",
     packages=["cthainlp"],
     ext_modules=[cthainlp_extension],
+    package_data={
+        "cthainlp": ["data/*.txt"],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
