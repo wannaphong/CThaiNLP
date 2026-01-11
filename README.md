@@ -1,5 +1,7 @@
 # CThaiNLP
 
+![Build and Test](https://github.com/wannaphong/CThaiNLP/actions/workflows/test.yml/badge.svg)
+
 C implementation of Thai Natural Language Processing tools, ported from [PyThaiNLP](https://github.com/PyThaiNLP/pythainlp).
 
 ## Features
