@@ -43,9 +43,30 @@ void run_test(const char* text, const char* dict_path, const char* expected, con
         return;
     }
     
-    /* Build output string */
-    char output[1024] = "[";
+    /* Build output string with dynamic allocation */
+    size_t output_size = 1024;
+    char* output = (char*)malloc(output_size);
+    if (!output) {
+        printf("❌ FAIL: Memory allocation failed\n");
+        newmm_free_result(tokens, token_count);
+        return;
+    }
+    
+    strcpy(output, "[");
     for (int i = 0; i < token_count; i++) {
+        size_t needed = strlen(output) + strlen(tokens[i]) + 10; /* "'', " + margins */
+        if (needed >= output_size) {
+            output_size = needed * 2;
+            char* new_output = (char*)realloc(output, output_size);
+            if (!new_output) {
+                printf("❌ FAIL: Memory reallocation failed\n");
+                free(output);
+                newmm_free_result(tokens, token_count);
+                return;
+            }
+            output = new_output;
+        }
+        
         strcat(output, "'");
         strcat(output, tokens[i]);
         strcat(output, "'");
@@ -63,6 +84,8 @@ void run_test(const char* text, const char* dict_path, const char* expected, con
     } else {
         printf("❌ FAIL\n");
     }
+    
+    free(output);
     
     newmm_free_result(tokens, token_count);
 }

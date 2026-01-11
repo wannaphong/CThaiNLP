@@ -171,7 +171,8 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
                 pos = end;
             } else {
                 /* Thai character not in dictionary - advance to next TCC boundary */
-                int next_pos = pos + 1;
+                /* Find next valid TCC boundary after current position */
+                int next_pos = text_len; /* Default to end of text */
                 for (int i = 0; i < num_valid; i++) {
                     if (valid_pos[i] > pos) {
                         next_pos = valid_pos[i];

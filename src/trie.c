@@ -86,12 +86,15 @@ static TrieNode* trie_node_add_child(TrieNode* node, int codepoint) {
         TrieNode** new_children = (TrieNode**)realloc(node->children, 
                                                        new_capacity * sizeof(TrieNode*));
         if (!new_children) return NULL;
-        node->children = new_children;
         
         int* new_chars = (int*)realloc(node->child_chars, new_capacity * sizeof(int));
-        if (!new_chars) return NULL;
-        node->child_chars = new_chars;
+        if (!new_chars) {
+            /* Restore old pointer to avoid leak, but still fail */
+            return NULL;
+        }
         
+        node->children = new_children;
+        node->child_chars = new_chars;
         node->capacity = new_capacity;
     }
     
