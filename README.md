@@ -4,6 +4,26 @@
 
 C implementation of Thai Natural Language Processing tools, ported from [PyThaiNLP](https://github.com/PyThaiNLP/pythainlp).
 
+## Installation
+
+### Python Package (Recommended)
+
+```bash
+pip install cthainlp
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/wannaphong/CThaiNLP.git
+cd CThaiNLP
+pip install -e .
+```
+
+### C Library
+
+See [Building](#building) section below.
+
 ## Features
 
 - **newmm**: Dictionary-based maximal matching word segmentation constrained by Thai Character Cluster (TCC) boundaries
@@ -11,6 +31,37 @@ C implementation of Thai Natural Language Processing tools, ported from [PyThaiN
 - UTF-8 support
 - Efficient Trie data structure for dictionary lookup
 - Handles mixed Thai/English/numeric content
+- **Python bindings** with PyThaiNLP-compatible API
+
+## Quick Start
+
+### Python
+
+```python
+from cthainlp import word_tokenize
+
+# Tokenize Thai text
+text = "ฉันไปโรงเรียน"
+tokens = word_tokenize(text)
+print(tokens)  # ['ฉัน', 'ไป', 'โรงเรียน']
+```
+
+### C
+
+```c
+#include "newmm.h"
+
+int main() {
+    const char* text = "ฉันไปโรงเรียน";
+    int token_count;
+    char** tokens = newmm_segment(text, "data/thai_words.txt", &token_count);
+    
+    // Use tokens...
+    
+    newmm_free_result(tokens, token_count);
+    return 0;
+}
+```
 
 ## Building
 
