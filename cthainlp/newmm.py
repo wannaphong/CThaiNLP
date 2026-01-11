@@ -26,7 +26,7 @@ def segment(
         list: List of tokens (strings). Returns empty list if text is None or empty.
     
     Examples:
-        >>> from cthainlp.tokenize import newmm
+        >>> from cthainlp import newmm
         >>> newmm.segment("ฉันไปโรงเรียน")
         ['ฉัน', 'ไป', 'โรงเรียน']
         

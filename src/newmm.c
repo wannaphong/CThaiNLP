@@ -23,38 +23,6 @@ typedef struct {
     int size;
 } Graph;
 
-/* Helper: Check if a numeric sequence is valid (e.g., 19.84, 127.0.0.1, 1,984.42) */
-static bool is_valid_numeric_continuation(const char* text, int start, int end) {
-    /* Count dots and commas */
-    int dot_count = 0;
-    int comma_count = 0;
-    int last_special = -1;
-    
-    for (int i = start; i < end; i++) {
-        if (text[i] == '.') {
-            dot_count++;
-            last_special = i;
-        } else if (text[i] == ',') {
-            comma_count++;
-            last_special = i;
-        }
-    }
-    
-    /* If ends with special char, check if followed by more special chars */
-    if (last_special == end - 1 && end < (int)strlen(text)) {
-        char next = text[end];
-        if (next == '.' || next == ',') {
-            /* Multiple punctuation in a row - not valid numeric continuation */
-            return false;
-        }
-    }
-    
-    /* Allow IP addresses (multiple dots with digits) */
-    /* Allow decimals (one dot) */
-    /* Allow formatted numbers (commas and at most one dot) */
-    return true;
-}
-
 /* Helper: Check if character is non-Thai */
 static bool is_non_thai_char(int codepoint) {
     /* Latin letters, digits, spaces */
