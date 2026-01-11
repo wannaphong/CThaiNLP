@@ -82,7 +82,7 @@ static PyObject* py_newmm_segment(PyObject* Py_UNUSED(self), PyObject* args, PyO
     /* Get or load dictionary */
     newmm_dict_t dict = get_or_load_dict(dict_path);
     if (!dict) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to load dictionary");
+        PyErr_SetString(PyExc_MemoryError, "Failed to load dictionary (out of memory)");
         return NULL;
     }
     
