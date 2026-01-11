@@ -57,3 +57,19 @@ dkms.conf
 # Build directories
 build/
 lib/
+
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+.eggs/
+*.egg
+.Python
+venv/
+env/
+ENV/
+.venv
+

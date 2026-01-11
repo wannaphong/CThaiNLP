@@ -18,8 +18,9 @@ C implementation of Thai Natural Language Processing tools, ported from [PyThaiN
 
 - GCC or compatible C compiler
 - Make
+- Python 3.7+ (for Python bindings)
 
-### Compilation
+### C Library Compilation
 
 ```bash
 make
@@ -29,9 +30,45 @@ This will create:
 - Static library: `lib/libcthainlp.a`
 - Example program: `build/example_basic`
 
+### Python Package Installation
+
+Install the Python bindings:
+
+```bash
+pip install -e .
+```
+
+Or build from source:
+
+```bash
+python setup.py build
+python setup.py install
+```
+
 ## Usage
 
-### Basic Example
+### Python
+
+The Python API is designed to be compatible with PyThaiNLP:
+
+```python
+from cthainlp import word_tokenize
+
+# Basic tokenization
+text = "ฉันไปโรงเรียน"
+tokens = word_tokenize(text)
+print(tokens)  # ['ฉัน', 'ไป', 'โรงเรียน']
+
+# With custom dictionary
+tokens = word_tokenize(text, custom_dict="data/thai_words.txt")
+
+# Specify engine explicitly
+tokens = word_tokenize(text, engine="newmm")
+```
+
+### C Library
+
+#### Basic Example
 
 ```c
 #include "newmm.h"
@@ -63,6 +100,14 @@ gcc your_program.c -I./include -L./lib -lcthainlp -o your_program
 
 ### Running Examples
 
+#### Python Example
+
+```bash
+python examples/python/example_basic.py
+```
+
+#### C Example
+
 Basic example with default dictionary:
 ```bash
 ./build/example_basic "ฉันไปโรงเรียน"
@@ -75,7 +120,15 @@ With custom dictionary:
 
 ### Running Tests
 
-Run the test suite:
+#### Python Tests
+
+```bash
+python tests/python/test_tokenize.py
+```
+
+#### C Tests
+
+Run the C test suite:
 ```bash
 make test
 ```
@@ -136,11 +189,20 @@ A sample dictionary is provided in `data/thai_words.txt`.
 
 ## Comparison with PyThaiNLP
 
-The API is designed to be similar to PyThaiNLP's `segment()` function:
+CThaiNLP provides both C and Python APIs. The Python API is designed to be compatible with PyThaiNLP's `word_tokenize()` function:
 
-**PyThaiNLP (Python):**
+**PyThaiNLP:**
 ```python
 from pythainlp.tokenize import word_tokenize
+
+text = "ฉันไปโรงเรียน"
+tokens = word_tokenize(text, engine="newmm")
+print(tokens)  # ['ฉัน', 'ไป', 'โรงเรียน']
+```
+
+**CThaiNLP Python:**
+```python
+from cthainlp import word_tokenize
 
 text = "ฉันไปโรงเรียน"
 tokens = word_tokenize(text, engine="newmm")
@@ -170,21 +232,32 @@ The newmm (New Maximum Matching) algorithm:
 ```
 CThaiNLP/
 ├── include/
-│   └── newmm.h           # Public API header
+│   └── newmm.h             # Public C API header
 ├── src/
-│   ├── newmm.c           # Main newmm implementation
-│   ├── trie.c            # Trie data structure
-│   ├── trie.h            # Trie header
-│   ├── tcc.c             # Thai Character Cluster
-│   └── tcc.h             # TCC header
+│   ├── newmm.c             # Main newmm implementation
+│   ├── trie.c              # Trie data structure
+│   ├── trie.h              # Trie header
+│   ├── tcc.c               # Thai Character Cluster
+│   └── tcc.h               # TCC header
+├── python/
+│   └── cthainlp_wrapper.c  # Python C extension wrapper
+├── cthainlp/
+│   ├── __init__.py         # Python package
+│   └── tokenize.py         # Python tokenization API
 ├── examples/
-│   └── example_basic.c   # Basic usage example
+│   ├── example_basic.c     # C usage example
+│   └── python/
+│       └── example_basic.py # Python usage example
 ├── tests/
-│   └── test_newmm.c      # Test suite
+│   ├── test_newmm.c        # C test suite
+│   └── python/
+│       └── test_tokenize.py # Python test suite
 ├── data/
-│   └── thai_words.txt    # Sample dictionary
-├── Makefile              # Build configuration
-└── README.md             # This file
+│   └── thai_words.txt      # Sample dictionary
+├── setup.py                # Python package setup
+├── pyproject.toml          # Python build configuration
+├── Makefile                # Build configuration
+└── README.md               # This file
 ```
 
 ## Credits
@@ -207,4 +280,5 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 - [ ] Improve performance with optimized data structures
 - [ ] Add part-of-speech tagging
 - [ ] Add named entity recognition
-- [ ] Provide Python bindings (PyPI package)
+- [x] Provide Python bindings
+- [ ] Publish to PyPI

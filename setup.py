@@ -1,0 +1,52 @@
+"""Setup script for CThaiNLP Python bindings."""
+
+from setuptools import setup, Extension
+import os
+
+# Read README for long description
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+# Define the C extension module
+cthainlp_extension = Extension(
+    name="_cthainlp",
+    sources=[
+        "src/trie.c",
+        "src/tcc.c",
+        "src/newmm.c",
+        "python/cthainlp_wrapper.c",
+    ],
+    include_dirs=["include"],
+    extra_compile_args=["-Wall", "-Wextra", "-O2"],
+)
+
+setup(
+    name="cthainlp",
+    version="0.1.0",
+    author="Wannaphong Phatthiyaphaibun",
+    author_email="",
+    description="Python bindings for CThaiNLP - Thai Natural Language Processing library in C",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/wannaphong/CThaiNLP",
+    packages=["cthainlp"],
+    ext_modules=[cthainlp_extension],
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: C",
+        "Topic :: Text Processing :: Linguistic",
+    ],
+    python_requires=">=3.7",
+    include_package_data=True,
+    package_data={
+        "cthainlp": ["data/thai_words.txt"],
+    },
+)
