@@ -83,16 +83,23 @@ static TrieNode* trie_node_add_child(TrieNode* node, int codepoint) {
     if (node->num_children >= node->capacity) {
         int new_capacity = node->capacity == 0 ? INITIAL_CAPACITY : node->capacity * 2;
         
+        /* Allocate both arrays before updating pointers */
         TrieNode** new_children = (TrieNode**)realloc(node->children, 
                                                        new_capacity * sizeof(TrieNode*));
         if (!new_children) return NULL;
         
         int* new_chars = (int*)realloc(node->child_chars, new_capacity * sizeof(int));
         if (!new_chars) {
-            /* Restore old pointer to avoid leak, but still fail */
+            /* new_children was allocated but new_chars failed */
+            /* Since realloc succeeded for new_children, the old pointer is invalid */
+            /* We must use the new_children pointer, even though we can't proceed */
+            node->children = new_children;
+            /* Alternatively, we could try to restore by reallocating to old size */
+            /* But that could also fail, so we just update and return NULL */
             return NULL;
         }
         
+        /* Both allocations succeeded, update pointers */
         node->children = new_children;
         node->child_chars = new_chars;
         node->capacity = new_capacity;
@@ -201,8 +208,11 @@ int trie_prefixes(Trie* trie, const char* text, char*** prefixes, int** lengths)
     *prefixes = (char**)malloc(max_prefixes * sizeof(char*));
     *lengths = (int*)malloc(max_prefixes * sizeof(int));
     if (!*prefixes || !*lengths) {
-        free(*prefixes);
-        free(*lengths);
+        /* Clean up any successful allocation */
+        if (*prefixes) free(*prefixes);
+        if (*lengths) free(*lengths);
+        *prefixes = NULL;
+        *lengths = NULL;
         return 0;
     }
     

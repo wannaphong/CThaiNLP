@@ -17,6 +17,9 @@ typedef struct {
 static int test_count = 0;
 static int test_passed = 0;
 
+#define INITIAL_OUTPUT_SIZE 1024
+#define TOKEN_OVERHEAD 4  /* For "'', " around each token */
+
 void run_test(const char* text, const char* dict_path, const char* expected, const char* description) {
     test_count++;
     printf("\n[Test %d] %s\n", test_count, description);
@@ -44,7 +47,7 @@ void run_test(const char* text, const char* dict_path, const char* expected, con
     }
     
     /* Build output string with dynamic allocation */
-    size_t output_size = 1024;
+    size_t output_size = INITIAL_OUTPUT_SIZE;
     char* output = (char*)malloc(output_size);
     if (!output) {
         printf("❌ FAIL: Memory allocation failed\n");
@@ -54,7 +57,7 @@ void run_test(const char* text, const char* dict_path, const char* expected, con
     
     strcpy(output, "[");
     for (int i = 0; i < token_count; i++) {
-        size_t needed = strlen(output) + strlen(tokens[i]) + 10; /* "'', " + margins */
+        size_t needed = strlen(output) + strlen(tokens[i]) + TOKEN_OVERHEAD + 1; /* +1 for null */
         if (needed >= output_size) {
             output_size = needed * 2;
             char* new_output = (char*)realloc(output, output_size);
