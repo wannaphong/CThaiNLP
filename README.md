@@ -71,6 +71,15 @@ With custom dictionary:
 ./build/example_basic "ฉันไปโรงเรียน" data/thai_words.txt
 ```
 
+### Running Tests
+
+Run the test suite:
+```bash
+make test
+```
+
+This will compile and run all unit tests to verify the tokenizer is working correctly.
+
 ## API Reference
 
 ### Functions
@@ -168,6 +177,8 @@ CThaiNLP/
 │   └── tcc.h             # TCC header
 ├── examples/
 │   └── example_basic.c   # Basic usage example
+├── tests/
+│   └── test_newmm.c      # Test suite
 ├── data/
 │   └── thai_words.txt    # Sample dictionary
 ├── Makefile              # Build configuration

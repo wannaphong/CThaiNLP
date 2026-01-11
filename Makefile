@@ -21,9 +21,10 @@ LIBRARY = $(LIB_DIR)/libcthainlp.a
 
 # Example programs
 EXAMPLE_BASIC = $(BUILD_DIR)/example_basic
+TEST_NEWMM = $(BUILD_DIR)/test_newmm
 
 # Default target
-all: dirs $(LIBRARY) $(EXAMPLE_BASIC)
+all: dirs $(LIBRARY) $(EXAMPLE_BASIC) $(TEST_NEWMM)
 
 # Create directories
 dirs:
@@ -47,8 +48,16 @@ $(LIBRARY): $(OBJECTS)
 $(EXAMPLE_BASIC): $(EXAMPLES_DIR)/example_basic.c $(LIBRARY)
 	$(CC) $(CFLAGS) $< -L$(LIB_DIR) -lcthainlp -o $@
 
+# Build test programs
+$(TEST_NEWMM): tests/test_newmm.c $(LIBRARY)
+	$(CC) $(CFLAGS) $< -L$(LIB_DIR) -lcthainlp -o $@
+
+# Test target
+test: $(TEST_NEWMM)
+	./$(TEST_NEWMM)
+
 # Clean
 clean:
 	rm -rf $(BUILD_DIR) $(LIB_DIR)
 
-.PHONY: all dirs clean
+.PHONY: all dirs clean test
