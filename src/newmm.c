@@ -122,13 +122,70 @@ static int segment_text(const char* text, Trie* trie, char*** tokens) {
         int best_len = 0;
         int best_end_pos = pos;
         
-        /* Find longest valid prefix */
+        /* Simple greedy: find longest match */
+        /* But prefer shorter match if longer one leaves us with unknown Thai character */
         for (int i = 0; i < num_prefixes; i++) {
             int end_pos = pos + lengths[i];
-            if (is_valid_pos(end_pos, valid_pos, num_valid) && lengths[i] > best_len) {
+            
+            if (lengths[i] > best_len) {
                 best_len = lengths[i];
                 best_end_pos = end_pos;
             }
+        }
+        
+        /* Now check if a shorter match would be better */
+        /* Only if the best match leads to an unknown Thai character */
+        /* and a shorter match leads to a known word */
+        if (best_len > 0 && best_end_pos < text_len) {
+            char** best_next_prefixes;
+            int* best_next_lengths;
+            int num_best_next = trie_prefixes(trie, text + best_end_pos, &best_next_prefixes, &best_next_lengths);
+            
+            if (num_best_next == 0) {
+                /* Best match doesn't lead to a dictionary word */
+                /* Check if it's a Thai character (not Latin/digit) */
+                int byte_len;
+                int next_cp = get_utf8_codepoint(text + best_end_pos, &byte_len);
+                
+                if (!is_non_thai_char(next_cp)) {
+                    /* It's a Thai character that's not in dictionary */
+                    /* Try shorter matches to see if they lead to dictionary words */
+                    for (int i = 0; i < num_prefixes; i++) {
+                        int end_pos = pos + lengths[i];
+                        if (lengths[i] < best_len && end_pos < text_len) {
+                            char** next_prefixes;
+                            int* next_lengths;
+                            int num_next = trie_prefixes(trie, text + end_pos, &next_prefixes, &next_lengths);
+                            
+                            if (num_next > 0) {
+                                /* This shorter match leads to a dictionary word */
+                                /* Prefer it */
+                                best_len = lengths[i];
+                                best_end_pos = end_pos;
+                            }
+                            
+                            /* Free lookahead results */
+                            for (int j = 0; j < num_next; j++) {
+                                free(next_prefixes[j]);
+                            }
+                            free(next_prefixes);
+                            free(next_lengths);
+                            
+                            if (num_next > 0) {
+                                /* We found a better match, stop looking */
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            /* Free lookahead results */
+            for (int j = 0; j < num_best_next; j++) {
+                free(best_next_prefixes[j]);
+            }
+            free(best_next_prefixes);
+            free(best_next_lengths);
         }
         
         /* Free prefix results */

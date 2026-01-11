@@ -11,6 +11,33 @@ except ImportError:
     _cthainlp = None
 
 
+def _get_default_dict_path() -> Optional[str]:
+    """
+    Get the default dictionary file path.
+    
+    Returns:
+        str: Absolute path to the default dictionary file
+    """
+    # Get the directory where this module is located
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Try to find dictionary in package data directory
+    # When installed: cthainlp/data/thai_words.txt
+    dict_path = os.path.join(module_dir, "data", "thai_words.txt")
+    if os.path.exists(dict_path):
+        return dict_path
+    
+    # Try parent directory (development mode)
+    # When in source: CThaiNLP/data/thai_words.txt
+    parent_dir = os.path.dirname(module_dir)
+    dict_path = os.path.join(parent_dir, "data", "thai_words.txt")
+    if os.path.exists(dict_path):
+        return dict_path
+    
+    # Fallback: return None to use hardcoded dictionary
+    return None
+
+
 def word_tokenize(
     text: str,
     engine: str = "newmm",
@@ -67,12 +94,15 @@ def word_tokenize(
     if not text:
         return []
     
-    # If custom_dict is provided and exists, use it; otherwise use None for default
-    dict_path = None
+    # Determine which dictionary to use
     if custom_dict is not None:
+        # User provided a custom dictionary
         if not os.path.exists(custom_dict):
             raise FileNotFoundError(f"Dictionary file not found: {custom_dict}")
         dict_path = custom_dict
+    else:
+        # Use default dictionary
+        dict_path = _get_default_dict_path()
     
     # Call the C extension
     tokens = _cthainlp.segment(text, dict_path)
