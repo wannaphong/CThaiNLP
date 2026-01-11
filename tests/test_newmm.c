@@ -105,7 +105,7 @@ int main() {
     
     /* Test 2: Thai sentence with common words */
     run_test("วันนี้อากาศดีมาก", dict,
-             "['วันนี้', 'อา', 'กา', 'ศดี', 'มาก']",
+             "['วันนี้', 'อากาศ', 'ดีมาก']",
              "Thai sentence with partial dictionary match");
     
     /* Test 3: English text */
