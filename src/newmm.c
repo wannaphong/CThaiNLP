@@ -23,15 +23,6 @@ typedef struct {
     int size;
 } Graph;
 
-/* Helper: Check if position is in the valid positions set */
-static bool is_valid_pos(int pos, int* valid_pos, int num_valid) {
-    for (int i = 0; i < num_valid; i++) {
-        if (valid_pos[i] == pos) return true;
-        if (valid_pos[i] > pos) return false;
-    }
-    return false;
-}
-
 /* Helper: Check if character is non-Thai */
 static bool is_non_thai_char(int codepoint) {
     /* Latin letters, digits, spaces */
